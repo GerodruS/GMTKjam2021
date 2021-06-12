@@ -4,19 +4,10 @@ use macroquad::prelude::*;
 use ron::ser::PrettyConfig;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct GameData {
     pub resolution: (f32, f32),
     pub levels: Vec<LevelData>,
-}
-
-impl Default for GameData {
-    fn default() -> Self {
-        GameData {
-            resolution: (100.0, 100.0),
-            levels: vec![],
-        }
-    }
 }
 
 impl GameData {
@@ -62,11 +53,10 @@ pub struct PointData {
 pub enum PointType {
     Start,
     Finish,
-    Common {
-        pair_index: usize,
-    },
+    Common { pair_index: usize },
 }
 
+#[derive(Default)]
 pub struct ConnectionData {
     pub from_index: usize,
     pub to_index: usize,

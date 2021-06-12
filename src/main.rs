@@ -3,7 +3,7 @@ use macroquad::prelude::*;
 use game_data::GameData;
 use game_state::GameState;
 
-use crate::game_data::PointType::{Common, Start, Finish};
+use crate::game_data::PointType::{Common, Finish, Start};
 use crate::game_data::{ConnectionData, LevelAdditionalData, PointData};
 
 mod game_data;
@@ -233,6 +233,22 @@ async fn main() {
                     camera.screen_to_world(vec2(mouse_position.0, mouse_position.1));
 
                 if let Some((current_start_index, _)) = current_start {
+                    if is_mouse_button_pressed(MouseButton::Left) {
+                        let mut index = None;
+                        for (i, connection_data) in connections_data.iter().enumerate() {
+                            let point_data =
+                                &level_add_data.points_data[connection_data.from_index];
+                            if mouse_position.distance_squared(point_data.position)
+                                < point_radius * point_radius
+                            {
+                                index = Some(i);
+                                break;
+                            }
+                        }
+                        if let Some(index) = index {
+                            connections_data.truncate(index);
+                        }
+                    }
                     if is_mouse_button_released(MouseButton::Left) {
                         if mouse_position.distance_squared(
                             level_add_data.points_data[level_add_data.finish_point_index].position,
@@ -244,8 +260,9 @@ async fn main() {
                             });
                         } else {
                             for (i, point_data) in level_add_data.points_data.iter().enumerate() {
-                                if mouse_position.distance_squared(point_data.position)
-                                    < point_radius * point_radius
+                                if i != current_start_index
+                                    && mouse_position.distance_squared(point_data.position)
+                                        < point_radius * point_radius
                                 {
                                     if !connections_data
                                         .iter()
