@@ -7,7 +7,10 @@ use game_data::GameData;
 async fn main() {
     let file_name = "assets/game.data";
     let game_data = GameData::load_from_file(file_name).expect("Game data not read");
-    println!("[{}] [{}] [{}]", game_data.levels[0], game_data.levels[1], game_data.levels[2]);
+    println!(
+        "[{}] [{}] [{}]",
+        game_data.levels[0], game_data.levels[1], game_data.levels[2]
+    );
 
     loop {
         clear_background(BLACK);
