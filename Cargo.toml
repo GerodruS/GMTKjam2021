@@ -1,5 +1,5 @@
 [package]
-name = "GMTKjam2021"
+name = "gmtk_jam_2021"
 version = "0.1.0"
 authors = ["gerodrus <gerodrus@gmail.com>"]
 edition = "2018"
