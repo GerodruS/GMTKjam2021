@@ -9,14 +9,20 @@ async fn main() {
     let game_data = GameData::load_from_file(file_name)
         .await
         .expect("Game data not read");
-    println!(
-        "[{}] [{}] [{}]",
-        game_data.levels[0], game_data.levels[1], game_data.levels[2]
-    );
 
     loop {
         clear_background(BLACK);
-        draw_text("GMTK Game Jam 2021", 20.0, 20.0, 30.0, WHITE);
+
+        egui_macroquad::ui(|egui_ctx| {
+            egui::Window::new("GMTK Game Jam 2021").show(egui_ctx, |ui| {
+                ui.label(format!(
+                    "[{}] [{}] [{}]",
+                    game_data.levels[0], game_data.levels[1], game_data.levels[2],
+                ));
+            });
+        });
+
+        egui_macroquad::draw();
         next_frame().await
     }
 }
