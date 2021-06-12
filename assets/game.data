@@ -6,6 +6,7 @@
     levels: [
         (
             name: "One Exit",
+            win_count: 0,
             layouts: [
                 "
                 ......
@@ -16,6 +17,7 @@
         ),
         (
             name: "level 2",
+            win_count: 1,
             layouts: [
                 "
                 ..0...
@@ -26,11 +28,12 @@
         ),
         (
             name: "level 3",
+            win_count: 2,
             layouts: [
                 "
-                ......
+                .0.1..
                 .s..f.
-                ......
+                ..0.1.
                 ",
             ],
         ),

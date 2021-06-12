@@ -35,6 +35,7 @@ impl GameData {
 #[derive(Serialize, Deserialize)]
 pub struct LevelData {
     pub name: String,
+    pub win_count: usize,
     pub layouts: Vec<String>,
 }
 

@@ -254,10 +254,18 @@ async fn main() {
                             level_add_data.points_data[level_add_data.finish_point_index].position,
                         ) < point_radius * point_radius
                         {
-                            connections_data.push(ConnectionData {
-                                from_index: current_start_index,
-                                to_index: level_add_data.finish_point_index,
-                            });
+                            if level_data.win_count <= connections_data.len() {
+                                connections_data.push(ConnectionData {
+                                    from_index: current_start_index,
+                                    to_index: level_add_data.finish_point_index,
+                                });
+                            } else {
+                                println!(
+                                    "not enough {}/{}",
+                                    connections_data.len(),
+                                    level_data.win_count
+                                );
+                            }
                         } else {
                             for (i, point_data) in level_add_data.points_data.iter().enumerate() {
                                 if i != current_start_index
@@ -316,9 +324,11 @@ async fn main() {
                 egui_macroquad::ui(|egui_ctx| {
                     egui::Window::new("GMTK Game Jam 2021").show(egui_ctx, |ui| {
                         ui.label(format!(
-                            "Playing level: '{}. {}'",
+                            "Playing level: '{}. {}'\nProgress:{}/{}",
                             level_index + 1,
-                            level_data.name
+                            level_data.name,
+                            connections_data.len().min(level_data.win_count),
+                            level_data.win_count,
                         ));
                         if ui.button("Exit to Main Menu").clicked() {
                             next_game_state = Some(GameState::MainMenu);
