@@ -6,12 +6,16 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct GameData {
+    pub resolution: (f32, f32),
     pub levels: Vec<LevelData>,
 }
 
 impl Default for GameData {
     fn default() -> Self {
-        GameData { levels: vec![] }
+        GameData {
+            resolution: (100.0, 100.0),
+            levels: vec![],
+        }
     }
 }
 
@@ -40,4 +44,5 @@ impl GameData {
 #[derive(Serialize, Deserialize)]
 pub struct LevelData {
     pub name: String,
+    pub layouts: Vec<String>,
 }

@@ -1,13 +1,38 @@
 (
+    resolution: (
+        100,
+        100,
+    ),
     levels: [
         (
-            name: "level 1",
+            name: "One Exit",
+            layouts: [
+                "
+                ......
+                .s..f.
+                ......
+                ",
+            ],
         ),
         (
             name: "level 2",
+            layouts: [
+                "
+                ......
+                .s..f.
+                ......
+                ",
+            ],
         ),
         (
             name: "level 3",
+            layouts: [
+                "
+                ......
+                .s..f.
+                ......
+                ",
+            ],
         ),
     ],
 )
