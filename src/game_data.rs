@@ -49,12 +49,25 @@ pub struct LevelData {
 
 pub struct LevelAdditionalData {
     pub size: Vec2,
-    pub start_position: Vec2,
-    pub finish_position: Vec2,
     pub points_data: Vec<PointData>,
+    pub start_point_index: usize,
+    pub finish_point_index: usize,
 }
 
 pub struct PointData {
     pub position: Vec2,
-    pub pair_index: usize,
+    pub point_type: PointType,
+}
+
+pub enum PointType {
+    Start,
+    Finish,
+    Common {
+        pair_index: usize,
+    },
+}
+
+pub struct ConnectionData {
+    pub from_index: usize,
+    pub to_index: usize,
 }
