@@ -1,7 +1,8 @@
+use std::fs::File;
+
 use macroquad::prelude::*;
 use ron::ser::PrettyConfig;
 use serde::{Deserialize, Serialize};
-use std::fs::File;
 
 #[derive(Serialize, Deserialize)]
 pub struct GameData {
