@@ -83,6 +83,7 @@ async fn main() {
                     }
                 }
                 // println!("w={} h={} s={:} f={:}", width, height, start_position, finish_position);
+                // TODO: ^ move this into a separate state LevelLoading/Preparing
                 update_screen_size(&mut camera, (width as f32, height as f32));
 
                 draw_rectangle_lines(-0.5, -0.5, width as f32, height as f32, 0.1, GRAY);
@@ -92,8 +93,20 @@ async fn main() {
                     }
                 }
 
-                draw_circle(start_position.x, start_position.y, 0.5, YELLOW);
-                draw_circle(finish_position.x, finish_position.y, 0.5, GREEN);
+                let point_radius = 0.5;
+                draw_circle(start_position.x, start_position.y, point_radius, YELLOW);
+                draw_circle(finish_position.x, finish_position.y, point_radius, GREEN);
+
+                let mouse_position = mouse_position();
+                let mouse_position = camera
+                    .screen_to_world(vec2(mouse_position.0, mouse_position.1));
+                draw_line(start_position.x, start_position.y, mouse_position.x, mouse_position.y, 0.1, RED);
+
+                if is_mouse_button_released(MouseButton::Left) {
+                    if mouse_position.distance_squared(finish_position) < point_radius * point_radius {
+                        println!("DONE");
+                    }
+                }
 
                 egui_macroquad::ui(|egui_ctx| {
                     egui::Window::new("GMTK Game Jam 2021").show(egui_ctx, |ui| {
