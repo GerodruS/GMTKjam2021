@@ -3,8 +3,8 @@ use macroquad::prelude::*;
 use game_data::GameData;
 use game_state::GameState;
 
-use crate::game_data::PointType::{Common, Start};
-use crate::game_data::{ConnectionData, LevelAdditionalData, PointData, PointType};
+use crate::game_data::PointType::{Common, Start, Finish};
+use crate::game_data::{ConnectionData, LevelAdditionalData, PointData};
 
 mod game_data;
 mod game_state;
@@ -116,7 +116,7 @@ async fn main() {
                         }
                     }
                     if let Some(index) = another_point_index {
-                        point_data.point_type = PointType::Common { pair_index: index };
+                        point_data.point_type = Common { pair_index: index };
                     } else {
                         // TODO: not good -- only one point has this id
                     }
@@ -125,13 +125,13 @@ async fn main() {
                 let start_point_index = points_data.len();
                 points_data.push(PointData {
                     position: start_position,
-                    point_type: PointType::Start,
+                    point_type: Start,
                 });
 
                 let finish_point_index = points_data.len();
                 points_data.push(PointData {
                     position: finish_position,
-                    point_type: PointType::Finish,
+                    point_type: Finish,
                 });
 
                 println!(
@@ -238,7 +238,6 @@ async fn main() {
                             level_add_data.points_data[level_add_data.finish_point_index].position,
                         ) < point_radius * point_radius
                         {
-                            println!("DONE");
                             connections_data.push(ConnectionData {
                                 from_index: current_start_index,
                                 to_index: level_add_data.finish_point_index,
@@ -262,6 +261,14 @@ async fn main() {
                         }
                     }
                 }
+
+                let is_win = {
+                    if let Some(connection_data) = connections_data.last() {
+                        connection_data.to_index == level_add_data.finish_point_index
+                    } else {
+                        false
+                    }
+                };
 
                 for connection_data in &connections_data {
                     let from_position =
@@ -291,17 +298,23 @@ async fn main() {
                 let mut next_game_state = None;
                 egui_macroquad::ui(|egui_ctx| {
                     egui::Window::new("GMTK Game Jam 2021").show(egui_ctx, |ui| {
-                        {
-                            ui.label(format!(
-                                "Playing level: '{}. {}'",
-                                level_index + 1,
-                                level_data.name
-                            ));
-                        }
+                        ui.label(format!(
+                            "Playing level: '{}. {}'",
+                            level_index + 1,
+                            level_data.name
+                        ));
                         if ui.button("Exit to Main Menu").clicked() {
                             next_game_state = Some(GameState::MainMenu);
                         }
                     });
+                    if is_win {
+                        egui::Window::new("Win!").show(egui_ctx, |ui| {
+                            ui.label("Great Success!");
+                            if ui.button("Exit to Main Menu").clicked() {
+                                next_game_state = Some(GameState::MainMenu);
+                            }
+                        });
+                    }
                 });
 
                 if let Some(state) = next_game_state {

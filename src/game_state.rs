@@ -1,4 +1,4 @@
-use crate::game_data::{ConnectionData, LevelAdditionalData};
+use crate::game_data::{LevelAdditionalData};
 
 pub enum GameState {
     Start,
