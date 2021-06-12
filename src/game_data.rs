@@ -5,7 +5,7 @@ use std::fs::File;
 
 #[derive(Serialize, Deserialize)]
 pub struct GameData {
-    pub levels: Vec<String>,
+    pub levels: Vec<LevelData>,
 }
 
 impl Default for GameData {
@@ -34,4 +34,9 @@ impl GameData {
             }
         }
     }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct LevelData {
+    pub name: String,
 }

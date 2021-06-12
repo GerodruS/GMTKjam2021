@@ -1,7 +1,13 @@
 (
     levels: [
-        "level 1",
-        "level 2",
-        "level 3",
+        (
+            name: "level 1",
+        ),
+        (
+            name: "level 2",
+        ),
+        (
+            name: "level 3",
+        ),
     ],
 )

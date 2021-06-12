@@ -15,10 +15,15 @@ async fn main() {
 
         egui_macroquad::ui(|egui_ctx| {
             egui::Window::new("GMTK Game Jam 2021").show(egui_ctx, |ui| {
-                ui.label(format!(
-                    "[{}] [{}] [{}]",
-                    game_data.levels[0], game_data.levels[1], game_data.levels[2],
-                ));
+                ui.label("Select level:");
+                for (index, level_data) in game_data.levels.iter().enumerate() {
+                    if ui
+                        .button(format!("{}. {}", index + 1, level_data.name))
+                        .clicked()
+                    {
+                        println!("Lvl: '{}'", level_data.name);
+                    }
+                }
             });
         });
 
