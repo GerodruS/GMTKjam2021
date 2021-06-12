@@ -46,3 +46,10 @@ pub struct LevelData {
     pub name: String,
     pub layouts: Vec<String>,
 }
+
+#[derive(Copy, Clone)]
+pub struct LevelAdditionalData {
+    pub size: Vec2,
+    pub start_position: Vec2,
+    pub finish_position: Vec2,
+}

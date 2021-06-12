@@ -3,6 +3,8 @@ use macroquad::prelude::*;
 use game_data::GameData;
 use game_state::GameState;
 
+use crate::game_data::LevelAdditionalData;
+
 mod game_data;
 mod game_state;
 
@@ -36,16 +38,14 @@ async fn main() {
                                 .button(format!("{}. {}", index + 1, level_data.name))
                                 .clicked()
                             {
-                                game_state = GameState::Level {
-                                    level_index: index,
-                                };
+                                game_state = GameState::LevelPreparing { level_index: index };
                             }
                         }
                     });
                 });
             }
 
-            GameState::Level { level_index } => {
+            GameState::LevelPreparing { level_index } => {
                 let level_data = &(game_data.levels[level_index]);
                 let layout = level_data.layouts[0].clone();
 
@@ -82,28 +82,72 @@ async fn main() {
                         }
                     }
                 }
-                // println!("w={} h={} s={:} f={:}", width, height, start_position, finish_position);
-                // TODO: ^ move this into a separate state LevelLoading/Preparing
-                update_screen_size(&mut camera, (width as f32, height as f32));
+                println!(
+                    "w={} h={} s={:} f={:}",
+                    width, height, start_position, finish_position
+                );
 
-                draw_rectangle_lines(-0.5, -0.5, width as f32, height as f32, 0.1, GRAY);
-                for y in 0..height {
-                    for x in 0..width {
+                game_state = GameState::Level {
+                    level_index,
+                    level_add_data: LevelAdditionalData {
+                        size: vec2(width as f32, height as f32),
+                        start_position,
+                        finish_position,
+                    },
+                };
+            }
+
+            GameState::Level {
+                level_index,
+                level_add_data,
+            } => {
+                let level_data = &(game_data.levels[level_index]);
+                update_screen_size(&mut camera, level_add_data.size);
+
+                draw_rectangle_lines(
+                    -0.5,
+                    -0.5,
+                    level_add_data.size.x,
+                    level_add_data.size.y,
+                    0.1,
+                    GRAY,
+                );
+                for y in 0..level_add_data.size.y as i32 {
+                    for x in 0..level_add_data.size.x as i32 {
                         draw_circle(x as f32, y as f32, 0.1, GRAY);
                     }
                 }
 
                 let point_radius = 0.5;
-                draw_circle(start_position.x, start_position.y, point_radius, YELLOW);
-                draw_circle(finish_position.x, finish_position.y, point_radius, GREEN);
+                draw_circle(
+                    level_add_data.start_position.x,
+                    level_add_data.start_position.y,
+                    point_radius,
+                    YELLOW,
+                );
+                draw_circle(
+                    level_add_data.finish_position.x,
+                    level_add_data.finish_position.y,
+                    point_radius,
+                    GREEN,
+                );
 
                 let mouse_position = mouse_position();
-                let mouse_position = camera
-                    .screen_to_world(vec2(mouse_position.0, mouse_position.1));
-                draw_line(start_position.x, start_position.y, mouse_position.x, mouse_position.y, 0.1, RED);
+                let mouse_position =
+                    camera.screen_to_world(vec2(mouse_position.0, mouse_position.1));
+                draw_line(
+                    level_add_data.start_position.x,
+                    level_add_data.start_position.y,
+                    mouse_position.x,
+                    mouse_position.y,
+                    0.1,
+                    RED,
+                );
 
                 if is_mouse_button_released(MouseButton::Left) {
-                    if mouse_position.distance_squared(finish_position) < point_radius * point_radius {
+                    if mouse_position.distance_squared(level_add_data.finish_position)
+                        < point_radius * point_radius
+                    {
                         println!("DONE");
                     }
                 }
@@ -111,12 +155,13 @@ async fn main() {
                 egui_macroquad::ui(|egui_ctx| {
                     egui::Window::new("GMTK Game Jam 2021").show(egui_ctx, |ui| {
                         {
-                            ui.label(format!("Playing level: '{}. {}'", level_index + 1, level_data.name));
+                            ui.label(format!(
+                                "Playing level: '{}. {}'",
+                                level_index + 1,
+                                level_data.name
+                            ));
                         }
-                        if ui
-                            .button("Exit to Main Menu")
-                            .clicked()
-                        {
+                        if ui.button("Exit to Main Menu").clicked() {
                             game_state = GameState::MainMenu {};
                         }
                     });
@@ -133,26 +178,20 @@ async fn main() {
     }
 }
 
-pub fn update_screen_size(camera: &mut Camera2D, virtual_size: (f32, f32)) {
+pub fn update_screen_size(camera: &mut Camera2D, virtual_size: Vec2) {
     // TODO: add delay and test for new screen size
 
     let real_screen_size = vec2(screen_width(), screen_height());
 
     let real_aspect_ratio = real_screen_size.x / real_screen_size.y;
-    let target_aspect_ratio = virtual_size.0 / virtual_size.1;
+    let target_aspect_ratio = virtual_size.x / virtual_size.y;
     let virtual_screen_size = if target_aspect_ratio < real_aspect_ratio {
-        vec2(
-            real_aspect_ratio * virtual_size.1,
-            virtual_size.1,
-        )
+        vec2(real_aspect_ratio * virtual_size.y, virtual_size.y)
     } else {
-        vec2(
-            virtual_size.0,
-            virtual_size.0 / real_aspect_ratio,
-        )
+        vec2(virtual_size.x, virtual_size.x / real_aspect_ratio)
     };
 
     camera.zoom = vec2(2.0 / virtual_screen_size.x, -2.0 / virtual_screen_size.y);
-    camera.target = (vec2(virtual_size.0, virtual_size.1) - Vec2::ONE) / 2.0;
+    camera.target = (vec2(virtual_size.x, virtual_size.y) - Vec2::ONE) / 2.0;
     set_camera(camera);
 }
