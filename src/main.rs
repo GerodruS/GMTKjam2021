@@ -3,7 +3,7 @@ use macroquad::prelude::*;
 use game_data::GameData;
 use game_state::GameState;
 
-use crate::game_data::LevelAdditionalData;
+use crate::game_data::{LevelAdditionalData, PointData};
 
 mod game_data;
 mod game_state;
@@ -55,6 +55,8 @@ async fn main() {
                 let mut height = 0;
                 let mut start_position = -Vec2::ONE;
                 let mut finish_position = -Vec2::ONE;
+                let mut points_data = Vec::new();
+                let mut pair_ids = Vec::new();
                 for line in layout.split(|c| c == '\n' || c == ' ') {
                     let line_width = line.len();
                     if 0 < line_width {
@@ -82,8 +84,37 @@ async fn main() {
                             }
                             _ => {}
                         }
+                        for (i, char) in line.chars().enumerate() {
+                            if char.is_digit(10) {
+                                points_data.push(PointData {
+                                    position: vec2(i as f32, (height - 1) as f32),
+                                    pair_index: 0, // will be filled later
+                                });
+                                pair_ids.push(char);
+                            }
+                        }
                     }
                 }
+
+                for (i, point_data) in points_data.iter_mut().enumerate() {
+                    let pair_id = pair_ids[i];
+                    let mut another_point_index = None;
+                    for (j, another_pair_id) in pair_ids.iter().enumerate() {
+                        if i != j && pair_id == *another_pair_id {
+                            if another_point_index == None {
+                                another_point_index = Some(j);
+                            } else {
+                                // TODO: not good -- more than two points has one id
+                            }
+                        }
+                    }
+                    if let Some(index) = another_point_index {
+                        point_data.pair_index = index;
+                    } else {
+                        // TODO: not good -- only one point has this id
+                    }
+                }
+
                 println!(
                     "w={} h={} s={:} f={:}",
                     width, height, start_position, finish_position
@@ -95,7 +126,7 @@ async fn main() {
                         size: vec2(width as f32, height as f32),
                         start_position,
                         finish_position,
-                        points_data: vec![]
+                        points_data,
                     },
                 };
             }
@@ -117,11 +148,30 @@ async fn main() {
                 );
                 for y in 0..level_add_data.size.y as i32 {
                     for x in 0..level_add_data.size.x as i32 {
-                        draw_circle(x as f32, y as f32, 0.1, GRAY);
+                        draw_circle(x as f32, y as f32, 0.1, DARKGRAY);
                     }
                 }
 
-                let point_radius = 0.5;
+                let point_radius = 0.25;
+                for point_data in &level_add_data.points_data {
+                    draw_circle(
+                        point_data.position.x,
+                        point_data.position.y,
+                        point_radius,
+                        LIGHTGRAY,
+                    );
+                }
+                // // debug pairs
+                // for point_data in &level_add_data.points_data {
+                //     draw_line(
+                //         point_data.position.x,
+                //         point_data.position.y,
+                //         level_add_data.points_data[point_data.pair_index].position.x,
+                //         level_add_data.points_data[point_data.pair_index].position.y,
+                //         0.01,
+                //         GREEN,
+                //     );
+                // }
                 draw_circle(
                     level_add_data.start_position.x,
                     level_add_data.start_position.y,
