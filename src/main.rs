@@ -236,6 +236,40 @@ async fn main() {
                 let mouse_position =
                     camera.screen_to_world(vec2(mouse_position.0, mouse_position.1));
 
+                let intersection_point = {
+                    let mut intersection_point = None;
+                    if let Some((_, current_start_position)) = current_start {
+                        let vector = mouse_position - current_start_position;
+                        let ray = Ray::new(
+                            Point2::new(current_start_position.x, current_start_position.y),
+                            Vector2::new(vector.x, vector.y),
+                        );
+                        let mut has_intersection = false;
+                        let mut min_time = vector.length();
+                        for connection_data in &connections_data {
+                            let from_position =
+                                level_add_data.points_data[connection_data.from_index].position;
+                            let to_position =
+                                level_add_data.points_data[connection_data.to_index].position;
+                            let segment = Segment::new(
+                                Point2::new(from_position.x, from_position.y),
+                                Point2::new(to_position.x, to_position.y),
+                            );
+                            if let Some(time) =
+                                segment.cast_ray(&Isometry::identity(), &ray, vector.length(), true)
+                            {
+                                has_intersection = true;
+                                min_time = min_time.min(time);
+                            }
+                        }
+                        if has_intersection {
+                            let vector = vector * min_time;
+                            intersection_point = Some(current_start_position + vector);
+                        }
+                    }
+                    intersection_point
+                };
+
                 if let Some((current_start_index, _)) = current_start {
                     if is_mouse_button_pressed(MouseButton::Left) {
                         let mut index = None;
@@ -253,7 +287,7 @@ async fn main() {
                             connections_data.truncate(index);
                         }
                     }
-                    if is_mouse_button_released(MouseButton::Left) {
+                    if is_mouse_button_released(MouseButton::Left) && intersection_point == None {
                         if mouse_position.distance_squared(
                             level_add_data.points_data[level_add_data.finish_point_index].position,
                         ) < point_radius * point_radius
@@ -314,12 +348,6 @@ async fn main() {
                 }
 
                 if let Some((_, current_start_position)) = current_start {
-                    let vector = mouse_position - current_start_position;
-                    let ray = Ray::new(
-                        Point2::new(current_start_position.x, current_start_position.y),
-                        Vector2::new(vector.x, vector.y),
-                    );
-
                     draw_line(
                         current_start_position.x,
                         current_start_position.y,
@@ -329,30 +357,15 @@ async fn main() {
                         RED,
                     );
 
-                    let mut has_intersection = false;
-                    for connection_data in &connections_data {
-                        let from_position =
-                            level_add_data.points_data[connection_data.from_index].position;
-                        let to_position =
-                            level_add_data.points_data[connection_data.to_index].position;
-                        let segment = Segment::new(
-                            Point2::new(from_position.x, from_position.y),
-                            Point2::new(to_position.x, to_position.y),
+                    if let Some(intersection_point) = intersection_point {
+                        draw_line(
+                            intersection_point.x,
+                            intersection_point.y,
+                            mouse_position.x,
+                            mouse_position.y,
+                            0.1,
+                            BLUE,
                         );
-                        if let Some(time) =
-                            segment.cast_ray(&Isometry::identity(), &ray, vector.length(), true)
-                        {
-                            has_intersection = true;
-                            let vector = vector * time;
-                            draw_line(
-                                current_start_position.x + vector.x,
-                                current_start_position.y + vector.y,
-                                mouse_position.x,
-                                mouse_position.y,
-                                0.1,
-                                BLUE,
-                            );
-                        }
                     }
                 }
 
