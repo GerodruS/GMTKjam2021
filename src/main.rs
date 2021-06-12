@@ -6,7 +6,9 @@ use game_data::GameData;
 #[macroquad::main("GMTK Game Jam 2021")]
 async fn main() {
     let file_name = "assets/game.data";
-    let game_data = GameData::load_from_file(file_name).expect("Game data not read");
+    let game_data = GameData::load_from_file(file_name)
+        .await
+        .expect("Game data not read");
     println!(
         "[{}] [{}] [{}]",
         game_data.levels[0], game_data.levels[1], game_data.levels[2]

@@ -1,3 +1,4 @@
+use macroquad::prelude::*;
 use ron::ser::PrettyConfig;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
@@ -14,15 +15,17 @@ impl Default for GameData {
 }
 
 impl GameData {
-    pub fn load_from_file(file_name: &str) -> Result<GameData, &str> {
-        match File::open(file_name) {
+    pub async fn load_from_file(file_name: &str) -> Result<GameData, &str> {
+        let file_result = load_file(file_name).await;
+        match file_result {
             Ok(file) => {
                 let game_data: GameData =
-                    ron::de::from_reader(file).expect("Deserialization from file failed");
+                    ron::de::from_bytes(file.as_ref()).expect("Deserialization from file failed");
                 Ok(game_data)
             }
             Err(_) => {
                 let pretty_config = PrettyConfig::new().with_separate_tuple_members(true);
+                // TODO: do not use FILE at WebGL version
                 let new_file = File::create(file_name).expect("file not created");
                 let new_game_data = GameData::default();
                 ron::ser::to_writer_pretty(new_file, &new_game_data, pretty_config)
