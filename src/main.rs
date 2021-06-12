@@ -1,4 +1,8 @@
 use macroquad::prelude::*;
+use parry2d::math::Isometry;
+use parry2d::na::{Point2, Vector2};
+use parry2d::query::{Ray, RayCast};
+use parry2d::shape::Segment;
 
 use game_data::GameData;
 use game_state::GameState;
@@ -310,6 +314,12 @@ async fn main() {
                 }
 
                 if let Some((_, current_start_position)) = current_start {
+                    let vector = mouse_position - current_start_position;
+                    let ray = Ray::new(
+                        Point2::new(current_start_position.x, current_start_position.y),
+                        Vector2::new(vector.x, vector.y),
+                    );
+
                     draw_line(
                         current_start_position.x,
                         current_start_position.y,
@@ -318,6 +328,32 @@ async fn main() {
                         0.1,
                         RED,
                     );
+
+                    let mut has_intersection = false;
+                    for connection_data in &connections_data {
+                        let from_position =
+                            level_add_data.points_data[connection_data.from_index].position;
+                        let to_position =
+                            level_add_data.points_data[connection_data.to_index].position;
+                        let segment = Segment::new(
+                            Point2::new(from_position.x, from_position.y),
+                            Point2::new(to_position.x, to_position.y),
+                        );
+                        if let Some(time) =
+                            segment.cast_ray(&Isometry::identity(), &ray, vector.length(), true)
+                        {
+                            has_intersection = true;
+                            let vector = vector * time;
+                            draw_line(
+                                current_start_position.x + vector.x,
+                                current_start_position.y + vector.y,
+                                mouse_position.x,
+                                mouse_position.y,
+                                0.1,
+                                BLUE,
+                            );
+                        }
+                    }
                 }
 
                 let mut next_game_state = None;
