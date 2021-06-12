@@ -23,7 +23,7 @@ async fn main() {
     'game_loop: loop {
         clear_background(BLACK);
 
-        match game_state {
+        match &game_state {
             GameState::Start => {
                 game_state = GameState::MainMenu {};
                 egui_macroquad::ui(|_| {});
@@ -46,7 +46,9 @@ async fn main() {
             }
 
             GameState::LevelPreparing { level_index } => {
-                let level_data = &(game_data.levels[level_index]);
+                egui_macroquad::ui(|_| {});
+
+                let level_data = &(game_data.levels[*level_index]);
                 let layout = level_data.layouts[0].clone();
 
                 let mut width = 0;
@@ -88,11 +90,12 @@ async fn main() {
                 );
 
                 game_state = GameState::Level {
-                    level_index,
+                    level_index: *level_index,
                     level_add_data: LevelAdditionalData {
                         size: vec2(width as f32, height as f32),
                         start_position,
                         finish_position,
+                        points_data: vec![]
                     },
                 };
             }
@@ -101,7 +104,7 @@ async fn main() {
                 level_index,
                 level_add_data,
             } => {
-                let level_data = &(game_data.levels[level_index]);
+                let level_data = &(game_data.levels[*level_index]);
                 update_screen_size(&mut camera, level_add_data.size);
 
                 draw_rectangle_lines(
@@ -152,6 +155,7 @@ async fn main() {
                     }
                 }
 
+                let mut next_game_state = None;
                 egui_macroquad::ui(|egui_ctx| {
                     egui::Window::new("GMTK Game Jam 2021").show(egui_ctx, |ui| {
                         {
@@ -162,10 +166,14 @@ async fn main() {
                             ));
                         }
                         if ui.button("Exit to Main Menu").clicked() {
-                            game_state = GameState::MainMenu {};
+                            next_game_state = Some(GameState::MainMenu);
                         }
                     });
                 });
+
+                if let Some(state) = next_game_state {
+                    game_state = state;
+                }
             }
 
             GameState::Quit => {
