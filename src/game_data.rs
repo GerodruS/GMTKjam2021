@@ -42,11 +42,15 @@ pub struct LevelData {
 }
 
 pub struct LevelAdditionalData {
+    pub layouts_data: Vec<LayoutAdditionalData>,
+}
+
+pub struct LayoutAdditionalData {
     pub size: Vec2,
     pub points_data: Vec<PointData>,
     pub obstacles_data: Vec<ObstacleData>,
-    pub start_point_index: usize,
-    pub finish_point_index: usize,
+    pub start_point_index: Option<usize>,
+    pub finish_point_index: Option<usize>,
 }
 
 pub struct PointData {
@@ -54,16 +58,27 @@ pub struct PointData {
     pub point_type: PointType,
 }
 
+#[derive(PartialEq)]
 pub enum PointType {
     Start,
     Finish,
-    Common { pair_index: usize },
+    Common {
+        layout_index: usize,
+        pair_index: usize,
+    },
 }
 
 pub struct ConnectionData {
-    pub from_index: usize,
-    pub to_index: usize,
+    pub layout_index: usize,
+    pub from_point_index: usize,
+    pub to_point_index: usize,
     pub segment: Segment, // for collision detection
+}
+
+#[derive(PartialEq)]
+pub struct PointId {
+    pub layout_index: usize,
+    pub point_index: usize,
 }
 
 pub struct ObstacleData {

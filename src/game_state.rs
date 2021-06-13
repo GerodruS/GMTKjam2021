@@ -8,6 +8,7 @@ pub enum GameState {
     },
     Level {
         level_index: usize,
+        layout_index: usize,
         level_add_data: LevelAdditionalData,
     },
     Quit,
