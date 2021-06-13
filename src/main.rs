@@ -166,9 +166,9 @@ async fn main() {
                 }
 
                 let mut pair_ids_index = 0;
-                for (layout_index, layout) in level_data.layouts.iter().enumerate() {
+                for (layout_index, _) in level_data.layouts.iter().enumerate() {
                     let layout_data = &mut layouts_data[layout_index];
-                    for (point_index, point_data) in layout_data.points_data.iter_mut().enumerate()
+                    for (_, point_data) in layout_data.points_data.iter_mut().enumerate()
                     {
                         match point_data.point_type {
                             PointType::Common { .. } => {
@@ -271,7 +271,7 @@ async fn main() {
                     let point_data = &level_add_data.layouts_data[connection_data.layout_index]
                         .points_data[connection_data.to_point_index];
                     if let Common {
-                        layout_index,
+                        layout_index: _,
                         pair_index,
                     } = point_data.point_type
                     {
@@ -386,7 +386,7 @@ async fn main() {
                                     .points_data[connection_data.to_point_index];
                                 if let Common {
                                     layout_index: pair_layout_index,
-                                    pair_index,
+                                    pair_index: _,
                                 } = last_point_data.point_type
                                 {
                                     next_game_state = Some(GameState::Level {
@@ -433,7 +433,7 @@ async fn main() {
                                     });
                                     if let Common {
                                         layout_index: pair_layout_index,
-                                        pair_index,
+                                        pair_index: _,
                                     } = layout_data.points_data[finish_point_index].point_type
                                     {
                                         if pair_layout_index != *layout_index {
@@ -455,9 +455,9 @@ async fn main() {
                                     < point_radius * point_radius
                             {
                                 if !connections_data.iter().any(|elem| {
-                                    (elem.layout_index == *layout_index
+                                    elem.layout_index == *layout_index
                                         && elem.from_point_index == i
-                                        || elem.to_point_index == i)
+                                        || elem.to_point_index == i
                                 }) {
                                     let from_position =
                                         layout_data.points_data[current_start_index].position;
@@ -473,7 +473,7 @@ async fn main() {
                                     });
                                     if let Common {
                                         layout_index: pair_layout_index,
-                                        pair_index,
+                                        pair_index: _,
                                     } = layout_data.points_data[i].point_type
                                     {
                                         if pair_layout_index != *layout_index {
