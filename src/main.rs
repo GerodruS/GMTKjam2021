@@ -290,11 +290,31 @@ async fn main() {
                 let mouse_position = mouse_position();
                 let mouse_position =
                     camera.screen_to_world(vec2(mouse_position.0, mouse_position.1));
+                let target_position =
+                    if let Some((current_start_index, current_start_position)) = current_start {
+                        let mut target_position = mouse_position;
+                        for (i, point_data) in layout_data.points_data.iter().enumerate() {
+                            if i != current_start_index
+                                && mouse_position.distance_squared(point_data.position)
+                                    < point_radius * point_radius
+                            {
+                                if !connections_data.iter().any(|elem| {
+                                    elem.layout_index == *layout_index && elem.from_point_index == i
+                                        || elem.to_point_index == i
+                                }) {
+                                    target_position = point_data.position;
+                                }
+                            }
+                        }
+                        target_position
+                    } else {
+                        mouse_position
+                    };
 
                 let intersection_point = {
                     let mut intersection_point = None;
                     if let Some((_, current_start_position)) = current_start {
-                        let vector = mouse_position - current_start_position;
+                        let vector = target_position - current_start_position;
                         let ray = Ray::new(
                             Point2::new(current_start_position.x, current_start_position.y),
                             Vector2::new(vector.x, vector.y),
@@ -346,7 +366,7 @@ async fn main() {
                                 let point_data = &level_add_data.layouts_data
                                     [connection_data.layout_index]
                                     .points_data[connection_data.from_point_index];
-                                if mouse_position.distance_squared(point_data.position)
+                                if target_position.distance_squared(point_data.position)
                                     < point_radius * point_radius
                                 {
                                     index = Some(i);
@@ -366,7 +386,7 @@ async fn main() {
                                     let point_data = &level_add_data.layouts_data
                                         [pair_layout_index]
                                         .points_data[pair_index];
-                                    if mouse_position.distance_squared(point_data.position)
+                                    if target_position.distance_squared(point_data.position)
                                         < point_radius * point_radius
                                     {
                                         index = Some(i);
@@ -410,7 +430,7 @@ async fn main() {
 
                     if is_mouse_button_released(MouseButton::Left) && intersection_point == None {
                         if let Some(finish_point_index) = layout_data.finish_point_index {
-                            if mouse_position.distance_squared(
+                            if target_position.distance_squared(
                                 layout_data.points_data[finish_point_index].position,
                             ) < point_radius * point_radius
                             {
@@ -448,7 +468,7 @@ async fn main() {
                         }
                         for (i, point_data) in layout_data.points_data.iter().enumerate() {
                             if i != current_start_index
-                                && mouse_position.distance_squared(point_data.position)
+                                && target_position.distance_squared(point_data.position)
                                     < point_radius * point_radius
                             {
                                 if !connections_data.iter().any(|elem| {
@@ -520,8 +540,8 @@ async fn main() {
                     draw_line(
                         current_start_position.x,
                         current_start_position.y,
-                        mouse_position.x,
-                        mouse_position.y,
+                        target_position.x,
+                        target_position.y,
                         0.1,
                         RED,
                     );
@@ -530,8 +550,8 @@ async fn main() {
                         draw_line(
                             intersection_point.x,
                             intersection_point.y,
-                            mouse_position.x,
-                            mouse_position.y,
+                            target_position.x,
+                            target_position.y,
                             0.1,
                             DARKBLUE,
                         );
