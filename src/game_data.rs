@@ -1,7 +1,8 @@
 use std::fs::File;
 
 use macroquad::prelude::*;
-use parry2d::shape::Segment;
+use parry2d::math::{Isometry, Real};
+use parry2d::shape::{Ball, Segment};
 use ron::ser::PrettyConfig;
 use serde::{Deserialize, Serialize};
 
@@ -43,6 +44,7 @@ pub struct LevelData {
 pub struct LevelAdditionalData {
     pub size: Vec2,
     pub points_data: Vec<PointData>,
+    pub obstacles_data: Vec<ObstacleData>,
     pub start_point_index: usize,
     pub finish_point_index: usize,
 }
@@ -62,4 +64,16 @@ pub struct ConnectionData {
     pub from_index: usize,
     pub to_index: usize,
     pub segment: Segment, // for collision detection
+}
+
+pub struct ObstacleData {
+    pub position: Vec2,
+    pub radius: f32,
+    pub ball: Ball, // for collision detection
+}
+
+impl ObstacleData {
+    pub fn get_isometry(&self) -> Isometry<Real> {
+        Isometry::translation(self.position.x, self.position.y)
+    }
 }

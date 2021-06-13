@@ -2,13 +2,13 @@ use macroquad::prelude::*;
 use parry2d::math::Isometry;
 use parry2d::na::{Point2, Vector2};
 use parry2d::query::{Ray, RayCast};
-use parry2d::shape::Segment;
+use parry2d::shape::{Ball, Segment};
 
 use game_data::GameData;
 use game_state::GameState;
 
 use crate::game_data::PointType::{Common, Finish, Start};
-use crate::game_data::{ConnectionData, LevelAdditionalData, PointData};
+use crate::game_data::{ConnectionData, LevelAdditionalData, ObstacleData, PointData};
 
 mod game_data;
 mod game_state;
@@ -65,6 +65,7 @@ async fn main() {
                 let mut start_position = -Vec2::ONE;
                 let mut finish_position = -Vec2::ONE;
                 let mut points_data = Vec::new();
+                let mut obstacles_data = Vec::new();
                 let mut pair_ids = Vec::new();
                 for line in layout.split(|c| c == '\n' || c == ' ') {
                     let line_width = line.len();
@@ -102,6 +103,14 @@ async fn main() {
                                     },
                                 });
                                 pair_ids.push(char);
+                            }
+                            if char == 'z' {
+                                let radius = 0.5; // TODO: move radius to constants
+                                obstacles_data.push(ObstacleData {
+                                    position: vec2(i as f32, (height - 1) as f32),
+                                    radius,
+                                    ball: Ball::new(radius),
+                                })
                             }
                         }
                     }
@@ -149,6 +158,7 @@ async fn main() {
                     level_add_data: LevelAdditionalData {
                         size: vec2(width as f32, height as f32),
                         points_data,
+                        obstacles_data,
                         start_point_index,
                         finish_point_index,
                     },
@@ -183,6 +193,14 @@ async fn main() {
                         point_data.position.y,
                         point_radius,
                         ORANGE,
+                    );
+                }
+                for obstacle_data in &level_add_data.obstacles_data {
+                    draw_circle(
+                        obstacle_data.position.x,
+                        obstacle_data.position.y,
+                        obstacle_data.radius,
+                        BLUE,
                     );
                 }
                 // // debug pairs
@@ -250,6 +268,18 @@ async fn main() {
                             let segment = connection_data.segment;
                             if let Some(time) =
                                 segment.cast_ray(&Isometry::identity(), &ray, vector.length(), true)
+                            {
+                                if time < 1.0 {
+                                    has_intersection = true;
+                                    min_time = min_time.min(time);
+                                }
+                            }
+                        }
+                        for obstacle_data in &level_add_data.obstacles_data {
+                            let ball = obstacle_data.ball;
+                            let isometry = obstacle_data.get_isometry();
+                            if let Some(time) =
+                                ball.cast_ray(&isometry, &ray, vector.length(), true)
                             {
                                 if time < 1.0 {
                                     has_intersection = true;
@@ -376,7 +406,7 @@ async fn main() {
                             mouse_position.x,
                             mouse_position.y,
                             0.1,
-                            BLUE,
+                            DARKBLUE,
                         );
                     }
                 }
