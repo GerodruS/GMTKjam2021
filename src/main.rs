@@ -168,8 +168,7 @@ async fn main() {
                 let mut pair_ids_index = 0;
                 for (layout_index, _) in level_data.layouts.iter().enumerate() {
                     let layout_data = &mut layouts_data[layout_index];
-                    for (_, point_data) in layout_data.points_data.iter_mut().enumerate()
-                    {
+                    for (_, point_data) in layout_data.points_data.iter_mut().enumerate() {
                         match point_data.point_type {
                             PointType::Common { .. } => {
                                 pair_ids_index += 1;
@@ -312,7 +311,6 @@ async fn main() {
                                     true,
                                 ) {
                                     if time < 1.0 {
-                                        println!("1 t={}", time);
                                         has_intersection = true;
                                         min_time = min_time.min(time);
                                     }
@@ -326,7 +324,6 @@ async fn main() {
                                 ball.cast_ray(&isometry, &ray, vector.length(), true)
                             {
                                 if time < 1.0 {
-                                    println!("2 t={}", time);
                                     has_intersection = true;
                                     min_time = min_time.min(time);
                                 }
@@ -455,8 +452,7 @@ async fn main() {
                                     < point_radius * point_radius
                             {
                                 if !connections_data.iter().any(|elem| {
-                                    elem.layout_index == *layout_index
-                                        && elem.from_point_index == i
+                                    elem.layout_index == *layout_index && elem.from_point_index == i
                                         || elem.to_point_index == i
                                 }) {
                                     let from_position =
@@ -558,8 +554,18 @@ async fn main() {
                     if is_win {
                         egui::Window::new("Win!").show(egui_ctx, |ui| {
                             ui.label("Great Success!");
-                            if ui.button("Exit to Main Menu").clicked() {
-                                next_game_state = Some(GameState::MainMenu);
+                            let next_level_index = *level_index + 1;
+                            if next_level_index < game_data.levels.len() {
+                                if ui.button("Next Level").clicked() {
+                                    next_game_state = Some(GameState::LevelPreparing {
+                                        level_index: next_level_index,
+                                    });
+                                }
+                            } else {
+                                ui.label("Thank you for playing!");
+                                if ui.button("Exit to Main Menu").clicked() {
+                                    next_game_state = Some(GameState::MainMenu);
+                                }
                             }
                         });
                     }
