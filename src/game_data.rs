@@ -1,6 +1,7 @@
 use std::fs::File;
 
 use macroquad::prelude::*;
+use parry2d::shape::Segment;
 use ron::ser::PrettyConfig;
 use serde::{Deserialize, Serialize};
 
@@ -57,8 +58,8 @@ pub enum PointType {
     Common { pair_index: usize },
 }
 
-#[derive(Default)]
 pub struct ConnectionData {
     pub from_index: usize,
     pub to_index: usize,
+    pub segment: Segment, // for collision detection
 }

@@ -247,14 +247,7 @@ async fn main() {
                         let mut has_intersection = false;
                         let mut min_time: f32 = 1.0;
                         for connection_data in &connections_data {
-                            let from_position =
-                                level_add_data.points_data[connection_data.from_index].position;
-                            let to_position =
-                                level_add_data.points_data[connection_data.to_index].position;
-                            let segment = Segment::new(
-                                Point2::new(from_position.x, from_position.y),
-                                Point2::new(to_position.x, to_position.y),
-                            );
+                            let segment = connection_data.segment;
                             if let Some(time) =
                                 segment.cast_ray(&Isometry::identity(), &ray, vector.length(), true)
                             {
@@ -295,9 +288,18 @@ async fn main() {
                         ) < point_radius * point_radius
                         {
                             if level_data.win_count <= connections_data.len() {
+                                let from_position =
+                                    level_add_data.points_data[current_start_index].position;
+                                let to_position = level_add_data.points_data
+                                    [level_add_data.finish_point_index]
+                                    .position;
                                 connections_data.push(ConnectionData {
                                     from_index: current_start_index,
                                     to_index: level_add_data.finish_point_index,
+                                    segment: Segment::new(
+                                        Point2::new(from_position.x, from_position.y),
+                                        Point2::new(to_position.x, to_position.y),
+                                    ),
                                 });
                             } else {
                                 println!(
@@ -316,9 +318,17 @@ async fn main() {
                                         .iter()
                                         .any(|elem| elem.from_index == i || elem.to_index == i)
                                     {
+                                        let from_position = level_add_data.points_data
+                                            [current_start_index]
+                                            .position;
+                                        let to_position = level_add_data.points_data[i].position;
                                         connections_data.push(ConnectionData {
                                             from_index: current_start_index,
                                             to_index: i,
+                                            segment: Segment::new(
+                                                Point2::new(from_position.x, from_position.y),
+                                                Point2::new(to_position.x, to_position.y),
+                                            ),
                                         });
                                     }
                                 }
