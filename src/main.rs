@@ -30,6 +30,9 @@ async fn main() {
 
     // TODO: move under GameState::Level
     let mut connections_data = Vec::<ConnectionData>::new();
+    let mut level_additional_data = LevelAdditionalData {
+        layouts_data: vec![],
+    };
     //
 
     'game_loop: loop {
@@ -197,18 +200,19 @@ async fn main() {
                 }
 
                 connections_data.clear();
+                level_additional_data = LevelAdditionalData { layouts_data };
                 game_state = GameState::Level {
                     level_index: *level_index,
                     layout_index: start_layout_index,
-                    level_add_data: LevelAdditionalData { layouts_data },
                 };
             }
 
             GameState::Level {
                 level_index,
                 layout_index,
-                level_add_data,
             } => {
+                let mut next_game_state = None;
+                let level_add_data = &level_additional_data;
                 let level_data = &(game_data.levels[*level_index]);
                 let layout_data = &level_add_data.layouts_data[*layout_index];
                 update_screen_size(&mut camera, layout_data.size);
@@ -299,13 +303,19 @@ async fn main() {
                         let mut has_intersection = false;
                         let mut min_time: f32 = 1.0;
                         for connection_data in &connections_data {
-                            let segment = connection_data.segment;
-                            if let Some(time) =
-                                segment.cast_ray(&Isometry::identity(), &ray, vector.length(), true)
-                            {
-                                if time < 1.0 {
-                                    has_intersection = true;
-                                    min_time = min_time.min(time);
+                            if connection_data.layout_index == *layout_index {
+                                let segment = connection_data.segment;
+                                if let Some(time) = segment.cast_ray(
+                                    &Isometry::identity(),
+                                    &ray,
+                                    vector.length(),
+                                    true,
+                                ) {
+                                    if time < 1.0 {
+                                        println!("1 t={}", time);
+                                        has_intersection = true;
+                                        min_time = min_time.min(time);
+                                    }
                                 }
                             }
                         }
@@ -316,6 +326,7 @@ async fn main() {
                                 ball.cast_ray(&isometry, &ray, vector.length(), true)
                             {
                                 if time < 1.0 {
+                                    println!("2 t={}", time);
                                     has_intersection = true;
                                     min_time = min_time.min(time);
                                 }
@@ -329,24 +340,77 @@ async fn main() {
                     intersection_point
                 };
 
+                let mut next_layout_index = None;
                 if let Some((current_start_index, _)) = current_start {
                     if is_mouse_button_pressed(MouseButton::Left) {
                         let mut index = None;
                         for (i, connection_data) in connections_data.iter().enumerate() {
+                            if connection_data.layout_index == *layout_index {
+                                let point_data = &level_add_data.layouts_data
+                                    [connection_data.layout_index]
+                                    .points_data[connection_data.from_point_index];
+                                if mouse_position.distance_squared(point_data.position)
+                                    < point_radius * point_radius
+                                {
+                                    index = Some(i);
+                                    break;
+                                }
+                            }
+
                             let point_data = &level_add_data.layouts_data
                                 [connection_data.layout_index]
-                                .points_data[connection_data.from_point_index];
-                            if mouse_position.distance_squared(point_data.position)
-                                < point_radius * point_radius
+                                .points_data[connection_data.to_point_index];
+                            if let Common {
+                                layout_index: pair_layout_index,
+                                pair_index,
+                            } = point_data.point_type
                             {
-                                index = Some(i);
-                                break;
+                                if pair_layout_index == *layout_index {
+                                    let point_data = &level_add_data.layouts_data
+                                        [pair_layout_index]
+                                        .points_data[pair_index];
+                                    if mouse_position.distance_squared(point_data.position)
+                                        < point_radius * point_radius
+                                    {
+                                        index = Some(i);
+                                        break;
+                                    }
+                                }
                             }
                         }
                         if let Some(index) = index {
                             connections_data.truncate(index);
+                            if let Some(connection_data) = connections_data.last() {
+                                let last_point_data = &level_add_data.layouts_data
+                                    [connection_data.layout_index]
+                                    .points_data[connection_data.to_point_index];
+                                if let Common {
+                                    layout_index: pair_layout_index,
+                                    pair_index,
+                                } = last_point_data.point_type
+                                {
+                                    next_game_state = Some(GameState::Level {
+                                        level_index: *level_index,
+                                        layout_index: pair_layout_index,
+                                    });
+                                }
+                            } else {
+                                for (another_layout_index, layout_data) in
+                                    level_add_data.layouts_data.iter().enumerate()
+                                {
+                                    if layout_data.start_point_index != None
+                                        && another_layout_index != *layout_index
+                                    {
+                                        next_game_state = Some(GameState::Level {
+                                            level_index: *level_index,
+                                            layout_index: another_layout_index,
+                                        });
+                                    }
+                                }
+                            }
                         }
                     }
+
                     if is_mouse_button_released(MouseButton::Left) && intersection_point == None {
                         if let Some(finish_point_index) = layout_data.finish_point_index {
                             if mouse_position.distance_squared(
@@ -367,6 +431,15 @@ async fn main() {
                                             Point2::new(to_position.x, to_position.y),
                                         ),
                                     });
+                                    if let Common {
+                                        layout_index: pair_layout_index,
+                                        pair_index,
+                                    } = layout_data.points_data[finish_point_index].point_type
+                                    {
+                                        if pair_layout_index != *layout_index {
+                                            next_layout_index = Some(pair_layout_index);
+                                        }
+                                    }
                                 } else {
                                     println!(
                                         "not enough {}/{}",
@@ -398,10 +471,26 @@ async fn main() {
                                             Point2::new(to_position.x, to_position.y),
                                         ),
                                     });
+                                    if let Common {
+                                        layout_index: pair_layout_index,
+                                        pair_index,
+                                    } = layout_data.points_data[i].point_type
+                                    {
+                                        if pair_layout_index != *layout_index {
+                                            next_layout_index = Some(pair_layout_index);
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
+                }
+
+                if let Some(next_layout_index) = next_layout_index {
+                    next_game_state = Some(GameState::Level {
+                        level_index: *level_index,
+                        layout_index: next_layout_index,
+                    });
                 }
 
                 let is_win = {
@@ -453,7 +542,6 @@ async fn main() {
                     }
                 }
 
-                let mut next_game_state = None;
                 egui_macroquad::ui(|egui_ctx| {
                     egui::Window::new("GMTK Game Jam 2021").show(egui_ctx, |ui| {
                         ui.label(format!(

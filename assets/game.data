@@ -50,7 +50,7 @@
         ),
         (
             name: "level 5",
-            win_count: 2,
+            win_count: 3,
             layouts: [
                 "
                 .0..1..
