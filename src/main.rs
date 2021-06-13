@@ -245,7 +245,7 @@ async fn main() {
                             Vector2::new(vector.x, vector.y),
                         );
                         let mut has_intersection = false;
-                        let mut min_time = vector.length();
+                        let mut min_time: f32 = 1.0;
                         for connection_data in &connections_data {
                             let from_position =
                                 level_add_data.points_data[connection_data.from_index].position;
@@ -258,8 +258,10 @@ async fn main() {
                             if let Some(time) =
                                 segment.cast_ray(&Isometry::identity(), &ray, vector.length(), true)
                             {
-                                has_intersection = true;
-                                min_time = min_time.min(time);
+                                if time < 1.0 {
+                                    has_intersection = true;
+                                    min_time = min_time.min(time);
+                                }
                             }
                         }
                         if has_intersection {
